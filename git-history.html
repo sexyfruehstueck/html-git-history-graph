@@ -1,0 +1,233 @@
+<!doctype>
+<html>
+    <head>
+        <title>GIT HISTORY</title>
+        <style contenteditable="true" style="display:block;">
+            #canvas{
+                width: 800px;
+                height: 400px;
+            }
+        </style>
+        <script>
+
+            let ctx;
+
+            window.addEventListener("load", e => {
+                ctx = document.querySelector("#canvas").getContext("2d");
+                initialize();
+                _drawBackground();
+                _drawStaticImage();
+            });
+
+            function _drawStaticImage(){
+
+                _initRepo();
+
+
+                _startFeature();
+
+                    _newCommit();
+                    /*
+                        _startHotfix();
+                        _endHotfix();
+                    
+                    */
+                    _newCommit();
+
+                _endFeature();
+
+                _startRelease();
+
+                    _newCommit();
+                
+                _endRelease();
+                    return;
+                /*
+                    ctx.strokeStyle = '#9C2BFF';
+                    _drawPoint(80, 20, 10);
+                    _drawPoint(400, 20, 10);
+
+                    ctx.strokeStyle = '#68C5FF';
+                    _drawPoint(240, 180, 10);
+
+                    ctx.strokeStyle = '#FF701E';
+                    _drawPoint(240, 100, 10);
+
+                    _drawConnection(80, 20, 240, 180);
+                    _drawConnection(240, 180, 400, 20);
+
+                    _drawConnection(80, 20, 240, 100);
+                    _drawConnection(240, 100, 400, 20);
+
+                    _drawVerticalLine(80, 20);
+                */
+            }
+
+            let lines = {
+                master:20,
+                release:100,
+                develop:180,
+                feature:260
+            };
+
+            let colors = {
+                master:"#9C2BFF",
+                release:"#cdcdcd",
+                develop:"#68C5FF",
+                feature:"#FF701E"               
+            };
+
+            let repoStatus = {
+                currentPosition: 80
+            };
+
+            function _endRelease(){
+                repoStatus.currentBranch = "master";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.release,
+                    repoStatus.currentPosition, lines.master
+                );
+
+                repoStatus.currentBranch = "develop";
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+               /*  _drawConnection(
+                    repoStatus.currentPosition - 80, lines.develop,
+                    repoStatus.currentPosition, lines.release
+                ); */
+
+                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);
+            }
+
+            function _startRelease(){
+                repoStatus.currentBranch = "release";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.release, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.develop,
+                    repoStatus.currentPosition, lines.release
+                );
+            }
+
+            function _endFeature(){
+                repoStatus.currentBranch = "develop";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.feature,
+                    repoStatus.currentPosition, lines.develop
+                );
+            }
+
+            function __nextTimeSlot(){
+                repoStatus.currentPosition += 80;
+            }
+
+            function _setColor(){
+                ctx.strokeStyle = colors[repoStatus.currentBranch];
+            }
+
+            function _startFeature(){
+                repoStatus.currentBranch = "feature";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.feature, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.develop,
+                    repoStatus.currentPosition, lines.feature
+                );
+            }
+
+            function _newCommit(){
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines[repoStatus.currentBranch], 10);
+            }
+
+            function _initRepo(){
+                repoStatus.currentBranch = "master";
+
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+
+                repoStatus.currentBranch = "develop";
+
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+
+                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);
+
+            }
+
+            function initialize(){
+                ctx.canvas.width = 800;
+                ctx.canvas.height = 400;
+            }
+
+            function _drawLine(fromx, fromy, tox, toy){
+                let line = new Path2D();
+                line.moveTo(fromx, fromy + .5);
+                line.lineTo(tox, toy + .5);
+                ctx.stroke(line);
+            }
+
+            function _drawPoint(x, y, size, style){
+                
+                ctx.fillStyle = "#ffffff";
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, 2 * Math.PI);
+                ctx.closePath();
+                ctx.fill()
+
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, 2 * Math.PI);
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            function _drawConnection(fromx, fromy, tox, toy){
+                let dist = (tox - fromx)/2;
+                ctx.strokeStyle = "#000000";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(fromx, fromy);
+                ctx.bezierCurveTo(fromx + dist, fromy, tox - dist, toy, tox, toy);
+                ctx.stroke();
+            }
+
+            function _drawDashedLine(fromx, fromy, tox, toy){
+                ctx.beginPath();
+                ctx.strokeStyle = "#cdcdcd";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 15]);
+                ctx.moveTo(fromx, fromy);
+                ctx.lineTo(tox, toy );
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+            }
+
+            function _drawBackground(){
+                ctx.strokeStyle = "#000000";
+                ctx.lineWidth = 2;
+
+                _drawLine(20, 20, 780, 20);
+                _drawLine(20, 100, 780, 100);
+                _drawLine(20, 180, 780, 180);
+                _drawLine(20, 260, 780, 260);
+
+            }
+        </script>
+    </head>
+    <body>
+        <canvas id="canvas">
+
+        </canvas>
+    </body>
+</html>
