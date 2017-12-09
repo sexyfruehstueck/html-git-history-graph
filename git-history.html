@@ -27,11 +27,7 @@
                 _startFeature();
 
                     _newCommit();
-                    /*
-                        _startHotfix();
-                        _endHotfix();
                     
-                    */
                     _newCommit();
 
                 _endFeature();
@@ -41,37 +37,26 @@
                     _newCommit();
                 
                 _endRelease();
-                    return;
-                /*
-                    ctx.strokeStyle = '#9C2BFF';
-                    _drawPoint(80, 20, 10);
-                    _drawPoint(400, 20, 10);
 
-                    ctx.strokeStyle = '#68C5FF';
-                    _drawPoint(240, 180, 10);
+                _goToTimeSlot(1);
+                
+                _startHotfix();
+                
+                _endHotfix();
 
-                    ctx.strokeStyle = '#FF701E';
-                    _drawPoint(240, 100, 10);
-
-                    _drawConnection(80, 20, 240, 180);
-                    _drawConnection(240, 180, 400, 20);
-
-                    _drawConnection(80, 20, 240, 100);
-                    _drawConnection(240, 100, 400, 20);
-
-                    _drawVerticalLine(80, 20);
-                */
             }
 
             let lines = {
                 master:20,
+                hotfix: 60,
                 release:100,
                 develop:180,
                 feature:260
             };
 
             let colors = {
-                master:"#9C2BFF",
+                master: "#9C2BFF",
+                hotfix: "#FF0A26",
                 release:"#cdcdcd",
                 develop:"#68C5FF",
                 feature:"#FF701E"               
@@ -80,6 +65,42 @@
             let repoStatus = {
                 currentPosition: 80
             };
+
+            function _goToTimeSlot(slot){
+                repoStatus.currentPosition = slot * 80;
+            }
+
+            function _startHotfix(){
+                repoStatus.currentBranch = "hotfix";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.hotfix, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.master,
+                    repoStatus.currentPosition, lines.hotfix
+                );
+            }
+
+            function _endHotfix(){
+                repoStatus.currentBranch = "master";
+                __nextTimeSlot();
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.hotfix,
+                    repoStatus.currentPosition, lines.master
+                );    
+
+                 repoStatus.currentBranch = "develop";
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.hotfix,
+                    repoStatus.currentPosition, lines.develop
+                );   
+
+                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);           
+            }
 
             function _endRelease(){
                 repoStatus.currentBranch = "master";
@@ -94,10 +115,6 @@
                 repoStatus.currentBranch = "develop";
                 _setColor();
                 _drawPoint(repoStatus.currentPosition, lines.develop, 10);
-               /*  _drawConnection(
-                    repoStatus.currentPosition - 80, lines.develop,
-                    repoStatus.currentPosition, lines.release
-                ); */
 
                 _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);
             }
@@ -221,6 +238,11 @@
                 _drawLine(20, 100, 780, 100);
                 _drawLine(20, 180, 780, 180);
                 _drawLine(20, 260, 780, 260);
+
+                ctx.strokeStyle = "#a1a1a1";
+                ctx.lineWidth = 1;
+
+                _drawLine(20, 60, 780, 60);
 
             }
         </script>
