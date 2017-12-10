@@ -16,7 +16,7 @@
                 ctx = document.querySelector("#canvas").getContext("2d");
                 initialize();
                 _drawBackground();
-                _drawStaticImage();
+                //_drawStaticImage();
                 _draw();
             });
 
@@ -95,9 +95,12 @@
             }
 
             function _startHotfix(){
-                repoStatus.currentBranch = "hotfix";
                 __nextTimeSlot();
-                _setPoint();
+                _setHotfixPoint();
+                _addConnection(
+                    repoStatus.lastMaster.x, lines.master,
+                    repoStatus.currentPosition - 80, lines.master,
+                );
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.master,
                     repoStatus.currentPosition, lines.hotfix
@@ -107,12 +110,18 @@
             function _endHotfix(){
                 __nextTimeSlot();
                 _setMasterPoint();
+                _setDevelopPoint();
+
+                _addConnection(
+                    repoStatus.lastHotfix.x, lines.hotfix,
+                    repoStatus.currentPosition - 80, lines.hotfix
+                );
+
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.hotfix,
                     repoStatus.currentPosition, lines.master
-                );    
+                );
 
-                _setDevelopPoint();
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.hotfix,
                     repoStatus.currentPosition, lines.develop
@@ -122,9 +131,13 @@
             }
 
             function _startRelease(){
-                repoStatus.currentBranch = "release";
                 __nextTimeSlot();
-                _setPoint();
+                _setReleasePoint();
+
+                _addConnection(
+                    repoStatus.lastDevelop.x, lines.develop,
+                    repoStatus.currentPosition - 80, lines.develop
+                );
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.develop,
                     repoStatus.currentPosition, lines.release
@@ -137,6 +150,10 @@
                 _setDevelopPoint();
 
                 _addConnection(
+                    repoStatus.lastRelease.x, lines.release,
+                    repoStatus.currentPosition - 80, lines.release
+                );
+                _addConnection(
                     repoStatus.currentPosition - 80, lines.release,
                     repoStatus.currentPosition, lines.master
                 );
@@ -146,6 +163,24 @@
                 );
 
                 tagVersion("v 0.2.1");
+            }
+
+            function _setHotfixPoint(){
+                repoStatus.currentBranch = "hotfix";
+                _setPoint();
+                repoStatus.lastHotfix = {x: repoStatus.currentPosition, y: lines.hotfix}; 
+            }
+
+            function _setFeaturePoint(){
+                repoStatus.currentBranch = "feature";
+                _setPoint();
+                repoStatus.lastFeature = {x: repoStatus.currentPosition, y: lines.feature}; 
+            }
+
+            function _setReleasePoint(){
+                repoStatus.currentBranch = "release";
+                _setPoint();
+                repoStatus.lastRelease = {x: repoStatus.currentPosition, y: lines.release}; 
             }
 
             function _setMasterPoint(){
@@ -173,9 +208,8 @@
             }
 
             function _startFeature(){
-                repoStatus.currentBranch = "feature";
                 __nextTimeSlot();
-                _setPoint();
+                _setFeaturePoint();
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.develop,
                     repoStatus.currentPosition, lines.feature
@@ -185,6 +219,10 @@
             function _endFeature(){   
                 __nextTimeSlot();
                 _setDevelopPoint();
+                _addConnection(
+                    repoStatus.lastFeature.x, lines.feature,
+                    repoStatus.currentPosition - 80, lines.feature
+                );
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.feature,
                     repoStatus.currentPosition, lines.develop
@@ -271,6 +309,7 @@
                 ctx.fillStyle = "#919191";
                 ctx.strokeStyle = "#919191";
                 ctx.lineWidth = 1;
+                ctx.setLineDash([]);
 
                 ctx.textAlign = 'center';
                 ctx.fillText(version, repoStatus.currentPosition, lines.master - 55);
