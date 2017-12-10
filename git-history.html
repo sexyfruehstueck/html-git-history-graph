@@ -60,7 +60,7 @@
 
             }
 
-            let lines = {
+            const lines = {
                 master:  100,
                 hotfix:  180,
                 release: 260,
@@ -68,7 +68,7 @@
                 feature: 420
             };  
 
-            let colors = {
+            const colors = {
                 master: "#9C2BFF",
                 hotfix: "#FF0A26",
                 release:"#919191",
@@ -97,7 +97,7 @@
             function _startHotfix(){
                 repoStatus.currentBranch = "hotfix";
                 __nextTimeSlot();
-                repoStatus.points.push({x:repoStatus.currentPosition,y:lines.hotfix,style:getCurrentColor(),size:10});
+                _setPoint();
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.master,
                     repoStatus.currentPosition, lines.hotfix
@@ -124,7 +124,7 @@
             function _startRelease(){
                 repoStatus.currentBranch = "release";
                 __nextTimeSlot();
-                repoStatus.points.push({x:repoStatus.currentPosition, y:lines.release, style:getCurrentColor(), size:10});
+                _setPoint();
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.develop,
                     repoStatus.currentPosition, lines.release
@@ -134,23 +134,23 @@
             function _endRelease(){
                 __nextTimeSlot();
                 _setMasterPoint();
+                _setDevelopPoint();
+
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.release,
                     repoStatus.currentPosition, lines.master
                 );
-
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.release,
                     repoStatus.currentPosition, lines.develop
                 );
 
-                _setDevelopPoint();
                 tagVersion("v 0.2.1");
             }
 
             function _setMasterPoint(){
                 repoStatus.currentBranch = "master";
-                repoStatus.points.push({x: repoStatus.currentPosition, y: lines.master, style: getCurrentColor(), size: 10});
+                _setPoint();
 
                 if(repoStatus.lastMaster){
                     _drawLine(repoStatus.lastMaster.x, lines.master, repoStatus.currentPosition, lines.master, "#000000", 4);
@@ -160,7 +160,7 @@
 
             function _setDevelopPoint(){
                 repoStatus.currentBranch = "develop";
-                repoStatus.points.push({x:repoStatus.currentPosition, y:lines.develop, style: getCurrentColor(), size: 10});
+                _setPoint();
 
                 if(repoStatus.lastDevelop){
                     _drawLine(repoStatus.lastDevelop.x, lines.develop, repoStatus.currentPosition, lines.develop, "#000000", 4);
@@ -168,10 +168,14 @@
                 repoStatus.lastDevelop = {x: repoStatus.currentPosition, y: lines.develop};
             }
 
+            function _setPoint(){
+                repoStatus.points.push({x: repoStatus.currentPosition, y: lines[repoStatus.currentBranch], style: getCurrentColor(), size: 10});
+            }
+
             function _startFeature(){
                 repoStatus.currentBranch = "feature";
                 __nextTimeSlot();
-                repoStatus.points.push({x: repoStatus.currentPosition, y: lines.feature, style: getCurrentColor(), size: 10});
+                _setPoint();
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.develop,
                     repoStatus.currentPosition, lines.feature
@@ -190,14 +194,16 @@
             function _newCommit(){
                 __nextTimeSlot(true);
                 if(repoStatus.currentBranch !== lines.master && repoStatus.currentBranch !== lines.develop){
-                    repoStatus.points.push({x: repoStatus.currentPosition, y: getCurrentLine(), style: getCurrentColor(), size: 10});
+                    _setPoint();
                 }
             }
 
+            /* ... */
             function _goToTimeSlot(slot){
                 repoStatus.currentPosition = 60 + slot * 80;
             }
 
+            /* ... */
             function __nextTimeSlot(drawConnection){
                 repoStatus.currentPosition += 80;
                 if(drawConnection){
