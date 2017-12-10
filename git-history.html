@@ -16,11 +16,14 @@
                 ctx = document.querySelector("#canvas").getContext("2d");
                 initialize();
                 _drawBackground();
-                //_drawStaticImage();
                 _draw();
             });
 
             function _draw(){
+                ctx.clearRect(0, 0, 900, 600);
+                
+                _backgroundLable();
+
                 for(let path of repoStatus.paths){
                     ctx.lineWidth = path.lineWidth;
                     ctx.strokeStyle = path.strokeStyle;
@@ -31,12 +34,18 @@
                 for(let point of repoStatus.points){
                     _drawPoint(point.x, point.y, point.size, point.style);
                 }
+                
+                let positionHelper = repoStatus.currentPosition;
+                for(let tag of repoStatus.tags){
+                    _goToTimeSlot(tag.slot);               
+                    _setVersionBox(tag.text);
+                }
+                repoStatus.currentPosition = positionHelper;
             }
 
             function _drawStaticImage(){
 
                 _initRepo();
-
 
                 _startFeature();
 
@@ -79,29 +88,25 @@
             let repoStatus = {
                 currentPosition: 140,
                 paths: [],
-                points: []
+                points: [],
+                tags:[]
             };
             
             function _initRepo(){
                 _setMasterPoint();
-                tagVersion("initial Commit");
-                _newCommit();
-                _setMasterPoint();
-                _addConnection(
-                    repoStatus.currentPosition, lines.master,
-                    repoStatus.currentPosition, lines.develop
-                );
-                _setDevelopPoint();
-                _draw();
+                _setNewTag("initial Commit", 1);
             }
 
             function _startHotfix(){
                 __nextTimeSlot();
                 _setHotfixPoint();
-                _addConnection(
-                    repoStatus.lastMaster.x, lines.master,
-                    repoStatus.currentPosition - 80, lines.master,
-                );
+                
+                if(repoStatus.lastMaster.x < repoStatus.currentPosition - 80){          
+                    _addConnection(
+                        repoStatus.lastMaster.x, lines.master,
+                        repoStatus.currentPosition - 80, lines.master,
+                    );
+                }
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.master,
                     repoStatus.currentPosition, lines.hotfix
@@ -114,10 +119,12 @@
                 _setMasterPoint();
                 _setDevelopPoint();
 
-                _addConnection(
-                    repoStatus.lastHotfix.x, lines.hotfix,
-                    repoStatus.currentPosition - 80, lines.hotfix
-                );
+                if(repoStatus.lastHotfix.x < repoStatus.currentPosition - 80){
+                    _addConnection(
+                        repoStatus.lastHotfix.x, lines.hotfix,
+                        repoStatus.currentPosition - 80, lines.hotfix
+                    );
+                }
 
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.hotfix,
@@ -135,10 +142,12 @@
                 __nextTimeSlot();
                 _setReleasePoint();
 
-                _addConnection(
-                    repoStatus.lastDevelop.x, lines.develop,
-                    repoStatus.currentPosition - 80, lines.develop
-                );
+                if(repoStatus.lastDevelop.x < repoStatus.currentPosition - 80){
+                    _addConnection(
+                        repoStatus.lastDevelop.x, lines.develop,
+                        repoStatus.currentPosition - 80, lines.develop
+                    );
+                }
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.develop,
                     repoStatus.currentPosition, lines.release
@@ -151,10 +160,12 @@
                 _setMasterPoint();
                 _setDevelopPoint();
 
-                _addConnection(
-                    repoStatus.lastRelease.x, lines.release,
-                    repoStatus.currentPosition - 80, lines.release
-                );
+                if(repoStatus.lastRelease.x < repoStatus.currentPosition - 80){
+                    _addConnection(
+                        repoStatus.lastRelease.x, lines.release,
+                        repoStatus.currentPosition - 80, lines.release
+                    ); 
+                }
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.release,
                     repoStatus.currentPosition, lines.master
@@ -220,12 +231,17 @@
             }
 
             function _endFeature(){   
+                console.info(repoStatus.currentPosition)
                 __nextTimeSlot();
+                console.info(repoStatus.currentPosition)
                 _setDevelopPoint();
-                _addConnection(
-                    repoStatus.lastFeature.x, lines.feature,
-                    repoStatus.currentPosition - 80, lines.feature
-                );
+                if(repoStatus.lastFeature.x < repoStatus.currentPosition - 80){
+                    _addConnection(
+                        repoStatus.lastFeature.x, lines.feature,
+                        repoStatus.currentPosition - 80, lines.feature
+                    );
+                }
+                
                 _addConnection(
                     repoStatus.currentPosition - 80, lines.feature,
                     repoStatus.currentPosition, lines.develop
@@ -241,15 +257,16 @@
 
             /* ... */
             function _goToTimeSlot(slot){
-                repoStatus.currentPosition = 60 + slot * 80;
+                repoStatus.currentPosition = 140 + (slot * 80);
             }
 
             /* ... */
             function __nextTimeSlot(drawConnection){
                 repoStatus.currentPosition += 80;
                 if(drawConnection){
-                    _drawLine(repoStatus.currentPosition, getCurrentLine(), 
-                    repoStatus.currentPosition - 80, getCurrentLine(), "#000000", 4);
+                    _drawLine(
+                        repoStatus.currentPosition, getCurrentLine(), 
+                        repoStatus.currentPosition - 80, getCurrentLine(), "#000000", 4);
                 } 
             }
 
@@ -305,7 +322,21 @@
                 repoStatus.paths.push(line);
             }
 
-            function tagVersion(version){
+            function _setNewTag(versiontext, timeslot){
+                repoStatus.tags.push({text:versiontext, slot: timeslot});
+                _goToTimeSlot(timeslot);
+
+                _setMasterPoint();
+                _setDevelopPoint();
+                _addConnection(
+                    repoStatus.currentPosition, lines.master,
+                    repoStatus.currentPosition, lines.develop
+                );
+                
+                _draw();
+            }
+
+            function _setVersionBox(version){
                 let length = 0;
 
                 ctx.font = "bold 12px arial";
@@ -340,18 +371,22 @@
             }
 
             function _drawBackground(){
+                for(let name in lines){
+                    _drawLine(20, lines[name], 880, lines[name], "#a1a1a1", 2, [2, 5]);
+                }
+            }
+
+            function _backgroundLable(){
                 ctx.font = "bold 14px arial";
+                ctx.textAlign = 'left';
                 for(let name in lines){
                     ctx.fillStyle = colors[name];
                     ctx.fillText(name, 25, lines[name] - 10);
-                    _drawLine(20, lines[name], 880, lines[name], "#a1a1a1", 2, [2, 5]);
                 }
             }
         </script>
     </head>
     <body>
-        <canvas id="canvas">
-
-        </canvas>
+        <canvas id="canvas"></canvas>
     </body>
 </html>
