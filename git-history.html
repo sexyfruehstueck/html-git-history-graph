@@ -43,32 +43,6 @@
                 repoStatus.currentPosition = positionHelper;
             }
 
-            function _drawStaticImage(){
-
-                _initRepo();
-
-                _startFeature();
-
-                    _newCommit();
-                    
-                    _newCommit();
-
-                _endFeature();
-
-                _startRelease();
-
-                    _newCommit();
-                
-                _endRelease();
-
-                _goToTimeSlot(2);
-                
-                _startHotfix();
-                
-                _endHotfix();
-
-            }
-
             const lines = {
                 master:  100,
                 hotfix:  180,
@@ -78,11 +52,12 @@
             };  
 
             const colors = {
-                master: "#9C2BFF",
-                hotfix: "#FF0A26",
-                release:"#919191",
-                develop:"#68C5FF",
-                feature:"#FF701E"               
+                master:  "#9C2BFF",
+                hotfix:  "#FF0A26",
+                release: "#919191",
+                develop: "#68C5FF",
+                feature: "#FF701E",
+                lines:   "#000000"               
             };
 
             let repoStatus = {
@@ -92,9 +67,9 @@
                 tags:[]
             };
             
-            function _initRepo(){
+            function _initRepo(firstMessage){
                 _setMasterPoint();
-                _setNewTag("initial Commit", 1);
+                _setNewTag(firstMessage || "initial Commit", 1);
             }
 
             function _startHotfix(){
@@ -201,7 +176,7 @@
                 _setPoint();
 
                 if(repoStatus.lastMaster){
-                    _drawLine(repoStatus.lastMaster.x, lines.master, repoStatus.currentPosition, lines.master, "#000000", 4);
+                    _drawLine(repoStatus.lastMaster.x, lines.master, repoStatus.currentPosition, lines.master, colors.lines, 4);
                 }
                 repoStatus.lastMaster = {x: repoStatus.currentPosition, y: lines.master};
             }
@@ -211,7 +186,7 @@
                 _setPoint();
 
                 if(repoStatus.lastDevelop){
-                    _drawLine(repoStatus.lastDevelop.x, lines.develop, repoStatus.currentPosition, lines.develop, "#000000", 4);
+                    _drawLine(repoStatus.lastDevelop.x, lines.develop, repoStatus.currentPosition, lines.develop, colors.lines, 4);
                 }
                 repoStatus.lastDevelop = {x: repoStatus.currentPosition, y: lines.develop};
             }
@@ -255,18 +230,29 @@
                 _draw();
             }
 
-            /* ... */
             function _goToTimeSlot(slot){
                 repoStatus.currentPosition = 140 + (slot * 80);
             }
 
-            /* ... */
+            function _checkoutBranch(branch){
+                repoStatus.currentBranch = branch;
+            }
+
             function __nextTimeSlot(drawConnection){
                 repoStatus.currentPosition += 80;
                 if(drawConnection){
-                    _drawLine(
-                        repoStatus.currentPosition, getCurrentLine(), 
-                        repoStatus.currentPosition - 80, getCurrentLine(), "#000000", 4);
+                    if(["master","develop"].indexOf(repoStatus.currentBranch) > -1 ){
+                        _drawLine(
+                            "master" === repoStatus.currentBranch ?
+                            repoStatus.lastMaster.x :
+                            repoStatus.lastDevelop.x, getCurrentLine(), 
+                            repoStatus.currentPosition, getCurrentLine(), colors.lines, 4);
+                    } else {
+                        _drawLine(
+                            repoStatus.currentPosition - 80, getCurrentLine(), 
+                            repoStatus.currentPosition, getCurrentLine(), colors.lines, 4);                       
+                    }
+
                 } 
             }
 
@@ -313,7 +299,7 @@
             function _addConnection(fromx, fromy, tox, toy){
                 let line = new Path2D();
                 let dist = tox - fromx;
-                line.strokeStyle = "#000000";
+                line.strokeStyle = colors.lines;
                 line.lineWidth = 4;
 
                 line.moveTo(fromx, fromy);
