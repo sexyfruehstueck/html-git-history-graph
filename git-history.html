@@ -38,7 +38,7 @@
                 
                 _endRelease();
 
-                _goToTimeSlot(1);
+                _goToTimeSlot(2);
                 
                 _startHotfix();
                 
@@ -47,12 +47,12 @@
             }
 
             let lines = {
-                master:20,
-                hotfix: 60,
-                release:100,
-                develop:180,
-                feature:260
-            };
+                master:  20,
+                hotfix:  100,
+                release: 180,
+                develop: 260,
+                feature: 340
+            };  
 
             let colors = {
                 master: "#9C2BFF",
@@ -63,7 +63,8 @@
             };
 
             let repoStatus = {
-                currentPosition: 80
+                currentPosition: 80,
+                path: new Path2D()
             };
 
             function _goToTimeSlot(slot){
@@ -79,44 +80,64 @@
                     repoStatus.currentPosition - 80, lines.master,
                     repoStatus.currentPosition, lines.hotfix
                 );
+                //repoStatus.startPoints.push({x: repoStatus.currentPosition, y: lines.hotfix});
             }
 
             function _endHotfix(){
-                repoStatus.currentBranch = "master";
                 __nextTimeSlot();
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+                _setMasterPoint();
                 _drawConnection(
                     repoStatus.currentPosition - 80, lines.hotfix,
                     repoStatus.currentPosition, lines.master
                 );    
 
-                 repoStatus.currentBranch = "develop";
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+                _setDevelopPoint();
                 _drawConnection(
                     repoStatus.currentPosition - 80, lines.hotfix,
                     repoStatus.currentPosition, lines.develop
-                );   
-
-                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);           
+                );        
             }
 
             function _endRelease(){
-                repoStatus.currentBranch = "master";
                 __nextTimeSlot();
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+                _setMasterPoint();
                 _drawConnection(
                     repoStatus.currentPosition - 80, lines.release,
                     repoStatus.currentPosition, lines.master
                 );
 
+                _drawConnection(
+                    repoStatus.currentPosition - 80, lines.release,
+                    repoStatus.currentPosition, lines.develop
+                );
+
+                _setDevelopPoint();
+            }
+
+            function _setMasterPoint(){
+                repoStatus.currentBranch = "master";
+                _setColor();
+                _drawPoint(repoStatus.currentPosition, lines.master, 10);
+
+                if(repoStatus.lastMaster){
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 4;
+                    _drawLine(repoStatus.lastMaster.x, lines.master, repoStatus.currentPosition, lines.master);
+                }
+                repoStatus.lastMaster = {x: repoStatus.currentPosition, y:lines.master};
+            }
+
+            function _setDevelopPoint(){
                 repoStatus.currentBranch = "develop";
                 _setColor();
                 _drawPoint(repoStatus.currentPosition, lines.develop, 10);
 
-                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);
+                if(repoStatus.lastDevelop){
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 4;
+                    _drawLine(repoStatus.lastDevelop.x, lines.develop, repoStatus.currentPosition, lines.develop);
+                }
+                repoStatus.lastDevelop = {x: repoStatus.currentPosition, y:lines.develop};
             }
 
             function _startRelease(){
@@ -130,19 +151,23 @@
                 );
             }
 
-            function _endFeature(){
-                repoStatus.currentBranch = "develop";
+            function _endFeature(){   
                 __nextTimeSlot();
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
+                _setDevelopPoint();
                 _drawConnection(
                     repoStatus.currentPosition - 80, lines.feature,
                     repoStatus.currentPosition, lines.develop
                 );
             }
 
-            function __nextTimeSlot(){
+            function __nextTimeSlot(draw){
                 repoStatus.currentPosition += 80;
+                if(draw){
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 4;
+                    _drawLine(repoStatus.currentPosition, lines[repoStatus.currentBranch], 
+                    repoStatus.currentPosition - 80, lines[repoStatus.currentBranch]);
+                } 
             }
 
             function _setColor(){
@@ -161,24 +186,20 @@
             }
 
             function _newCommit(){
-                __nextTimeSlot();
+                __nextTimeSlot(true);
                 _setColor();
                 _drawPoint(repoStatus.currentPosition, lines[repoStatus.currentBranch], 10);
             }
 
             function _initRepo(){
-                repoStatus.currentBranch = "master";
-
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.master, 10);
-
-                repoStatus.currentBranch = "develop";
-
-                _setColor();
-                _drawPoint(repoStatus.currentPosition, lines.develop, 10);
-
-                _drawDashedLine(repoStatus.currentPosition,lines.master,repoStatus.currentPosition,lines.develop);
-
+                _setMasterPoint();
+                _newCommit();
+                _setMasterPoint();
+                _drawConnection(
+                    repoStatus.currentPosition, lines.master,
+                    repoStatus.currentPosition, lines.develop
+                );
+                _setDevelopPoint();
             }
 
             function initialize(){
@@ -202,6 +223,7 @@
                 ctx.fill()
 
                 ctx.lineWidth = 10;
+                ctx.setLineDash([]);
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, 2 * Math.PI);
                 ctx.closePath();
@@ -209,40 +231,33 @@
             }
 
             function _drawConnection(fromx, fromy, tox, toy){
-                let dist = (tox - fromx)/2;
+                let dist = (tox - fromx);
                 ctx.strokeStyle = "#000000";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 4;
                 ctx.beginPath();
                 ctx.moveTo(fromx, fromy);
                 ctx.bezierCurveTo(fromx + dist, fromy, tox - dist, toy, tox, toy);
                 ctx.stroke();
-            }
 
-            function _drawDashedLine(fromx, fromy, tox, toy){
-                ctx.beginPath();
-                ctx.strokeStyle = "#cdcdcd";
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 15]);
-                ctx.moveTo(fromx, fromy);
-                ctx.lineTo(tox, toy );
-                ctx.stroke();
-
-                ctx.setLineDash([]);
+              /*  ctx.fillStyle = "red";
+                ctx.fillRect(fromx + dist, fromy, 10, 10);
+                ctx.fillRect(tox - dist, toy, 10, 10);*/
             }
 
             function _drawBackground(){
-                ctx.strokeStyle = "#000000";
+                ctx.strokeStyle = "#a1a1a1";
                 ctx.lineWidth = 2;
+                ctx.setLineDash([2, 5]);
 
-                _drawLine(20, 20, 780, 20);
-                _drawLine(20, 100, 780, 100);
-                _drawLine(20, 180, 780, 180);
-                _drawLine(20, 260, 780, 260);
+                _drawLine(20, lines.master, 780, lines.master);
+                _drawLine(20, lines.feature, 780, lines.feature);
 
                 ctx.strokeStyle = "#a1a1a1";
                 ctx.lineWidth = 1;
-
-                _drawLine(20, 60, 780, 60);
+                ctx.setLineDash([1, 5]);
+                _drawLine(20, lines.hotfix, 780, lines.hotfix);
+                _drawLine(20, lines.release, 780, lines.release);
+                _drawLine(20, lines.develop	, 780, lines.develop);
 
             }
         </script>
