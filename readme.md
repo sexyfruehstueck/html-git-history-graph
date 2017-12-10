@@ -3,7 +3,7 @@
 (***Documentation last update 2017-12-10 21:45***)  
 
 HTML Canvas Git History Graph, to create fast and nice history graphs.  
-![Screenshot of a small git history graph](https://raw.githubusercontent.com/sexyfruehstueck/html-git-history-graph/master/readme/screenhot.png)
+![Screenshot of a small git history graph](https://raw.githubusercontent.com/sexyfruehstueck/html-git-history-graph/master/readme/screenshot.png "Screenshot of a small git history graph")
 
 ## Features
 * create Graph
